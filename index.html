@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>CrissAI - Akıllı Asistan</title>
+    <style>
+        /* CSS STILLERI */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* EKRAN YÖNETİMİ */
+        .screen {
+            display: none;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* GİRİŞ EKRANI */
+        .login-body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            background: linear-gradient(135deg, #4361ee, #3a0ca3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .login-form h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            border-color: #4361ee;
+            outline: none;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #4361ee;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .switch-form {
+            text-align: center;
+            color: #666;
+        }
+
+        .switch-form a {
+            color: #4361ee;
+            text-decoration: none;
+        }
+
+        /* CHAT EKRANI */
+        .chat-body {
+            background: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #4361ee;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 60px;
+        }
+
+        .menu-btn, .new-chat-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .chat-header h1 {
+            font-size: 1.2em;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            transition: left 0.3s;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #4361ee;
+            color: white;
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-history-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            border-radius: 10px;
+            margin-bottom: 5px;
+        }
+
+        .chat-history-item.active {
+            background: #e3f2fd;
+        }
+
+        .chat-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .chat-preview {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .chat-date {
+            font-size: 0.7em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .sidebar-item {
+            width: 100%;
+            padding: 15px;
+            background: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+        }
+
+        /* ANA CHAT */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 60px;
+            height: calc(100vh - 120px);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            max-width: 85%;
+        }
+
+        .message.user {
+            margin-left: auto;
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message.ai .message-content {
+            background: #f1f3f5;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.user .message-content {
+            background: #4361ee;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 0.7em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .message.ai .message-time {
+            text-align: left;
+        }
+
+        .message.user .message-time {
+            text-align: right;
+        }
+
+        .thinking-indicator {
+            color: #666;
+            font-style: italic;
+        }
+
+        .thinking-indicator:after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { color: rgba(102, 102, 102, 0); }
+            40% { color: #666; }
+            60%, 100% { color: rgba(102, 102, 102, 0); }
+        }
+
+        .chat-input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .chat-input-container .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .chat-input-container input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+
+        .send-btn {
+            background: #4361ee;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 3000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .profile-info p {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .api-status {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .api-status.success {
+            color: #4caf50;
+        }
+
+        .api-status.error {
+            color: #ff4757;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .chat-header h1 {
+                font-size: 1.1em;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .sidebar {
+                width: 100%;
+                left: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- GİRİŞ EKRANI -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🧠 CrissAI</h1>
+                <p>Akıllı Asistan</p>
+            </div>
+
+            <div class="login-form" id="loginForm">
+                <h2>Giriş Yap</h2>
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Kullanıcı adı" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Şifre" required>
+                </div>
+                <button onclick="login()" class="login-btn">Giriş Yap</button>
+                <p class="switch-form">
+                    Hesabın yok mu? <a href="#" onclick="showRegister()">Kayıt Ol</a>
+                </p>
+            </div>
+
+            <div class="login-form" id="registerForm" style="display: none;">
+                <h2>Kayıt Ol</h2>
+                <div class="input-group">
+                    <input type="text" id="regUsername" placeholder="Kullanıcı adı" required>
+                </div>
+                <div class="input-group">
+                    <input type="email" id="regEmail" placeholder="E-posta" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="regPassword" placeholder="Şifre" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="regPasswordConfirm" placeholder="Şifre Tekrar" required>
+                </div>
+                <button onclick="register()" class="login-btn">Kayıt Ol</button>
+                <p class="switch-form">
+                    Hesabın var mı? <a href="#" onclick="showLogin()">Giriş Yap</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHAT EKRANI -->
+    <div id="chatScreen" class="screen">
+        <header class="chat-header">
+            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+            <h1>CrissAI</h1>
+            <button class="new-chat-btn" onclick="newChat()">+</button>
+        </header>
+
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Sohbetlerim</h3>
+                <button class="close-sidebar" onclick="toggleSidebar()">×</button>
+            </div>
+            <div class="chat-history" id="chatHistory"></div>
+            <div class="sidebar-footer">
+                <button class="sidebar-item" onclick="showProfile()">👤 Profilim</button>
+                <button class="sidebar-item" onclick="showApiStatus()">🔧 API Durumu</button>
+                <button class="sidebar-item logout-btn" onclick="logout()">🚪 Çıkış Yap</button>
+            </div>
+        </div>
+
+        <div class="chat-main" id="chatMain">
+            <div class="chat-messages" id="chatMessages"></div>
+            
+            <div class="chat-input-container">
+                <div class="input-group">
+                    <input type="text" id="messageInput" placeholder="CrissAI'ye mesaj yazın..." 
+                           onkeypress="handleKeyPress(event)">
+                    <button onclick="sendMessage()" class="send-btn">Gönder</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROFİL MODAL -->
+        <div class="modal" id="profileModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>👤 Profilim</h2>
+                    <button class="close-modal" onclick="closeProfile()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="profile-info">
+                        <p><strong>Kullanıcı Adı:</strong> <span id="profileUsername">-</span></p>
+                        <p><strong>E-posta:</strong> <span id="profileEmail">-</span></p>
+                        <p><strong>Kayıt Tarihi:</strong> <span id="profileDate">-</span></p>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">🚪 Çıkış Yap</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- API DURUM MODAL -->
+        <div class="modal" id="apiModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🔧 API Durumu</h2>
+                    <button class="close-modal" onclick="closeApiModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="api-status" id="apiStatus">
+                        <p>Google AI API bağlantısı kontrol ediliyor...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AUTH.JS - Kimlik Doğrulama
+        class AuthManager {
+            constructor() {
+                this.currentUser = null;
+            }
+
+            login(username, password) {
+                if (username && password) {
+                    this.currentUser = {
+                        id: 1,
+                        username: username,
+                        email: `${username}@crissai.com`,
+                        join_date: new Date().toISOString()
+                    };
+                    localStorage.setItem('crissai_user', JSON.stringify(this.currentUser));
+                    showScreen('chatScreen');
+                    setTimeout(() => window.chatManager.init(), 100);
+                } else {
+                    alert('Kullanıcı adı ve şifre gerekli!');
+                }
+            }
+
+            register(username, email, password) {
+                if (username && email && password) {
+                    const users = JSON.parse(localStorage.getItem('crissai_users') || '[]');
+                    users.push({ username, email, password });
+                    localStorage.setItem('crissai_users', JSON.stringify(users));
+                    alert('Kayıt başarılı! Giriş yapabilirsiniz.');
+                    showLogin();
+                }
+            }
+
+            logout() {
+                this.currentUser = null;
+                localStorage.removeItem('crissai_user');
+                showScreen('loginScreen');
+            }
+
+            checkAuth() {
+                const userData = localStorage.getItem('crissai_user');
+                if (userData) {
+                    this.currentUser = JSON.parse(userData);
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        // API.JS - Google AI Entegrasyonu
+        class CrissAIAPI {
+            constructor() {
+                this.apiKey = 'AIzaSyBAaEP5bDApq4WYA3xz7duD_yLkrQFYU08';
+                this.baseURL = 'https://generativelanguage.googleapis.com/v1';
+                this.model = 'gemini-pro';
+            }
+
+            async sendChatMessage(message, chatId) {
+                try {
+                    const response = await fetch(`${this.baseURL}/models/${this.model}:generateContent?key=${this.apiKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: message
+                                }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 1000,
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error?.message || 'API hatası');
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                        return { 
+                            message: data.candidates[0].content.parts[0].text
+                        };
+                    } else {
+                        throw new Error('Geçersiz API yanıtı');
+                    }
+
+                } catch (error) {
+                    console.error('Google AI API hatası:', error);
+                    throw new Error(`AI bağlantı hatası: ${error.message}`);
+                }
+            }
+
+            async checkAPIStatus() {
+                try {
+                    await this.sendChatMessage('Merhaba', 'test');
+                    return { 
+                        status: 'success',
+                        message: '✅ Google AI API bağlantısı başarılı!'
+                    };
+                } catch (error) {
+                    return {
+                        status: 'error', 
+                        message: `❌ API Hatası: ${error.message}`
+                    };
+                }
+            }
+        }
+
+        // CHAT.JS - Sohbet Yönetimi
+        class ChatManager {
+            constructor() {
+                this.currentChatId = null;
+                this.chats = this.loadChats();
+                this.api = new CrissAIAPI();
+            }
+
+            init() {
+                this.loadChatHistory();
+                this.startNewChat();
+                this.showNotification('CrissAI hazır! Gerçek Google AI ile sohbet edebilirsin.', 'success');
+            }
+
+            startNewChat() {
+                this.currentChatId = 'chat_' + Date.now();
+                this.chats[this.currentChatId] = {
+                    id: this.currentChatId,
+                    title: 'Yeni Sohbet',
+                    messages: [],
+                    created: new Date().toISOString()
+                };
+                this.saveChats();
+                this.renderChat();
+            }
+
+            async sendMessage() {
+                const input = document.getElementById('messageInput');
+                const message = input.value.trim();
+
+                if (!message) return;
+
+                this.addMessage('user', message);
+                input.value = '';
+
+                try {
+                    await this.getAIResponse(message);
+                } catch (error) {
+                    this.addMessage('ai', `❌ Hata: ${error.message}`);
+                }
+            }
+
+            async getAIResponse(userMessage) {
+                this.showThinkingIndicator();
+                
+                try {
+                    const response = await this.api.sendChatMessage(userMessage, this.currentChatId);
+                    this.hideThinkingIndicator();
+                    this.addMessage('ai', response.message);
+                } catch (error) {
+                    this.hideThinkingIndicator();
+                    throw error;
+                }
+            }
+
+            showThinkingIndicator() {
+                const thinkingId = 'thinking_' + Date.now();
+                this.addMessage('ai', '<div class="thinking-indicator">CrissAI düşünüyor...</div>', thinkingId);
+            }
+
+            hideThinkingIndicator() {
+                const thinkingElements = document.querySelectorAll('.thinking-indicator');
+                thinkingElements.forEach(el => el.closest('.message').remove());
+            }
+
+            addMessage(sender, content, customId = null) {
+                if (!this.currentChatId) return;
+
+                const message = {
+                    id: customId || 'msg_' + Date.now(),
+                    sender: sender,
+                    content: content,
+                    timestamp: new Date().toISOString()
+                };
+
+                this.chats[this.currentChatId].messages.push(message);
+                
+                if (sender === 'ai' && this.chats[this.currentChatId].title === 'Yeni Sohbet') {
+                    this.updateChatTitle(content.substring(0, 30) + '...');
+                }
+                
+                this.saveChats();
+                this.renderMessages();
+            }
+
+            updateChatTitle(newTitle) {
+                this.chats[this.currentChatId].title = newTitle;
+                this.saveChats();
+                this.loadChatHistory();
+            }
+
+            renderMessages() {
+                const container = document.getElementById('chatMessages');
+                const chat = this.chats[this.currentChatId];
+
+                if (!chat) return;
+
+                container.innerHTML = chat.messages.map(msg => `
+                    <div class="message ${msg.sender}">
+                        <div class="message-content">${msg.content}</div>
+                        <div class="message-time">${new Date(msg.timestamp).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                `).join('');
+
+                container.scrollTop = container.scrollHeight;
+            }
+
+            loadChatHistory() {
+                const container = document.getElementById('chatHistory');
+                const chats = Object.values(this.chats).sort((a, b) => 
+                    new Date(b.created) - new Date(a.created)
+                );
+
+                container.innerHTML = chats.map(chat => `
+                    <div class="chat-history-item ${chat.id === this.currentChatId ? 'active' : ''}" 
+                         onclick="window.chatManager.loadChat('${chat.id}')">
+                        <div class="chat-title">${chat.title}</div>
+                        <div class="chat-preview">${chat.messages[0]?.content.substring(0, 30)}...</div>
+                        <div class="chat-date">${new Date(chat.created).toLocaleDateString('tr-TR')}</div>
+                    </div>
+                `).join('');
+            }
+
+            loadChat(chatId) {
+                this.currentChatId = chatId;
+                this.renderChat();
+                toggleSidebar();
+            }
+
+            renderChat() {
+                this.renderMessages();
+                this.loadChatHistory();
+            }
+
+            saveChats() {
+                localStorage.setItem('crissai_chats', JSON.stringify(this.chats));
+            }
+
+            loadChats() {
+                return JSON.parse(localStorage.getItem('crissai_chats') || '{}');
+            }
+
+            showNotification(message, type = 'info') {
+                // Basit bildirim - geliştirilebilir
+                console.log(`${type}: ${message}`);
+            }
+        }
+
+        // GLOBAL DEĞİŞKENLER
+        window.authManager = new AuthManager();
+        window.chatManager = new ChatManager();
+
+        // UTILITY FONKSİYONLAR
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            window.authManager.login(username, password);
+        }
+
+        function register() {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regPasswordConfirm').value;
+
+            if (password !== confirm) {
+                alert('Şifreler eşleşmiyor!');
+                return;
+            }
+
+            window.authManager.register(username, email, password);
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function newChat() {
+            window.chatManager.startNewChat();
+        }
+
+        function showProfile() {
+            const user = window.authManager.currentUser;
+            document.getElementById('profileUsername').textContent = user.username;
+            document.getElementById('profileEmail').textContent = user.email;
+            document.getElementById('profileDate').textContent = new Date(user.join_date).toLocaleDateString('tr-TR');
+            document.getElementById('profileModal').classList.add('show');
+            toggleSidebar();
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModal').classList.remove('show');
+        }
+
+        async function showApiStatus() {
+            document.getElementById('apiModal').classList.add('show');
+            const statusElement = document.getElementById('apiStatus');
+            
+            statusElement.innerHTML = '<p>Google AI API bağlantısı kontrol ediliyor...</p>';
+            
+            const status = await window.chatManager.api.checkAPIStatus();
+            statusElement.innerHTML = `<p class="api-status ${status.status}">${status.message}</p>`;
+            
+            toggleSidebar();
+        }
+
+        function closeApiModal() {
+            document.getElementById('apiModal').classList.remove('show');
+        }
+
+        function logout() {
+            window.authManager.logout();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            window.chatManager.sendMessage();
+        }
+
+        // SAYFA YÜKLENİNCE
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.authManager.checkAuth()) {
+                showScreen('chatScreen');
+                setTimeout(() => window.chatManager.init(), 100);
+            }
+        });
+    </script>
+</body>
+</html>
